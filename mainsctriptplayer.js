@@ -1,4 +1,3 @@
-  <script>
 //<![CDATA[
 (function() {
     //
@@ -650,4 +649,3 @@
 
 })(); // Menutup IIFE
 //]]>
-</script>
