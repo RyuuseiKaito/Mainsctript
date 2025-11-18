@@ -1,4 +1,3 @@
-//<![CDATA[
 (function() {
     //
     // --- "MESIN" PLAYER MORIKNUS v6 (File 3) ---
@@ -164,7 +163,7 @@
         elements = {
             container: $('#videoContainerVidioPlayerHHC'),
             playerWrapper: $('#videoPlayerWrapper'),
-            lightOverlay: document.getElementById('turnOffLightOverlayVidioPlayerHHC'), // Ini ada di luar container
+            lightOverlay: document.getElementById('turnOffLightOverlayVidioPlayerHHC'),
             prevBtn: $('#prevBtn'),
             nextBtn: $('#nextBtn'),
             chapterBtn: $('#chapterSelectorBtn'),
@@ -223,7 +222,6 @@
 
     function loadInfoTab() {
         if (!elements.infoTab) return;
-        // Fungsi 'escapeHTML' untuk keamanan dari XSS
         const escapeHTML = (str) => str ? String(str).replace(/[&<>"']/g, match => ({'&': '&amp;','<': '&lt;','>': '&gt;','"': '&quot;',"'": '&#39;'})[match]) : '';
         elements.infoTab.innerHTML = `
             <div class="infoItemVidioPlayerHHC">
@@ -257,7 +255,6 @@
         }
         
         let charHTML = CONFIG.dataKarakter;
-        // Jika datanya array (dari JSON v5), render sebagai grid
         if (Array.isArray(CONFIG.dataKarakter)) {
             charHTML = '<div class="characterGridVidioPlayerHHC">' + CONFIG.dataKarakter.map(char => `
                 <div class="characterItemVidioPlayerHHC">
@@ -269,7 +266,6 @@
                 </div>
             `).join('') + '</div>';
         }
-        // Jika datanya string HTML (dari v4), langsung masukkan
         elements.charactersTab.innerHTML = charHTML;
     }
     
@@ -279,7 +275,6 @@
     }
 
     function attachEventListeners() {
-        // (PERBAIKAN) Listener Tab yang SOLID
         if (elements.tabNav) {
             elements.tabNav.addEventListener('click', function(e) {
                 if (e.target.classList.contains('tabBtnVidioPlayerHHC') && !e.target.classList.contains('activeVidioPlayerHHC')) {
@@ -299,7 +294,6 @@
 
         elements.container.addEventListener('contextmenu', event => event.preventDefault());
 
-        // Listener untuk Search & Sort
         if (elements.episodeSearch) elements.episodeSearch.addEventListener('input', () => { state.episodes.filter = elements.episodeSearch.value; renderEpisodeList(1); });
         if (elements.recommendationSearch) elements.recommendationSearch.addEventListener('input', () => { state.recommendations.filter = elements.recommendationSearch.value; renderRecommendationList(1); });
         
@@ -321,18 +315,14 @@
         });
     }
 
-    // --- (PERBAIKAN) FUNGSI TAB SOLID ---
     function switchTab(tabName) {
-        // 1. Sembunyikan SEMUA tab content
         elements.tabContents.querySelectorAll('.tabContentVidioPlayerHHC').forEach(content => {
             content.classList.remove('activeVidioPlayerHHC');
         });
-        // 2. Nonaktifkan SEMUA tombol tab
         elements.tabNav.querySelectorAll('.tabBtnVidioPlayerHHC').forEach(btn => {
             btn.classList.remove('activeVidioPlayerHHC');
         });
         
-        // 3. Aktifkan yang baru
         const newTabBtn = document.querySelector(`[data-tab="${tabName}"]`);
         const newTabContent = document.getElementById(`${tabName}Tab`);
         if (newTabBtn) newTabBtn.classList.add('activeVidioPlayerHHC');
@@ -350,7 +340,6 @@
         elements.container.style.zIndex = state.isLightOff ? 13 : '';
     }
 
-    // --- FUNGSI AMBIL DATA (FETCH) ---
     async function fetchData(labels) {
         if (!Array.isArray(labels) || labels.length === 0) return [];
         let allPosts = [];
@@ -360,7 +349,6 @@
         for (const label of labels) {
             if (typeof label !== 'string' || label.trim() === '') continue;
             try {
-                // Tambahkan parameter untuk mencegah cache (penting untuk jadwal)
                 const url = `${baseUrl}/feeds/posts/default/-/${encodeURIComponent(label)}?alt=json&max-results=${maxResults}&cache_bust=${new Date().getTime()}`;
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -374,7 +362,6 @@
         }
         const uniquePosts = Array.from(new Map(allPosts.map(post => [post.id.$t, post])).values());
         
-        // (PERBAIKAN) Simpan data yang lebih bersih
         return uniquePosts.map(post => {
             const labels = (post.category || []).map(cat => cat.term);
             return {
@@ -382,8 +369,8 @@
                 title: post.title.$t,
                 url: (post.link.find(link => link.rel === 'alternate') || {}).href || '#',
                 thumb: (post.media$thumbnail || {}).url || 'https://placehold.co/300x169/e0e0e0/333?text=No+Image',
-                date: new Date(post.published.$t), // Simpan sebagai objek Date
-                labels: labels // Simpan label untuk cek "Jadwal"
+                date: new Date(post.published.$t),
+                labels: labels
             };
         });
     }
@@ -408,20 +395,16 @@
         populateChapterSelector();
         findCurrentEpisode();
     }
-
-    // --- FUNGSI RENDER DAFTAR ---
     
     function renderEpisodeList(page = 1) {
         state.episodes.page = page;
         let dataToRender = filterAndSortData(state.episodes.data, state.episodes.filter, state.episodes.sort);
-        // (PERBAIKAN) Panggil renderListLayout (List View)
         renderListLayout(dataToRender, elements.episodeContent, elements.episodePagination, state.episodes, 'episodes', renderEpisodeList);
     }
     
     function renderRecommendationList(page = 1) {
         state.recommendations.page = page;
         let dataToRender = filterAndSortData(state.recommendations.data, state.recommendations.filter, state.recommendations.sort);
-        // (PERBAIKAN) Panggil renderGridLayout (Grid View)
         renderGridLayout(dataToRender, elements.recommendationContent, elements.recommendationPagination, state.recommendations, 'recommendations', renderRecommendationList);
     }
 
@@ -468,10 +451,8 @@
         }) + ' WIB';
     }
 
-    // --- (BARU) RENDER LIST VIEW (Untuk Episode) ---
     function renderListLayout(data, contentEl, paginationEl, stateObject, type, onPageChangeCallback) {
         if (!contentEl || !paginationEl) return;
-        
         if (data.length === 0) {
             contentEl.innerHTML = `<div class="loadingVidioPlayerHHC">Tidak ada ${type} ditemukan.</div>`;
             paginationEl.innerHTML = '';
@@ -481,15 +462,13 @@
         const perPage = CONFIG.episodesPerPage || 5;
         const totalPages = Math.ceil(data.length / perPage);
         stateObject.page = Math.min(Math.max(1, stateObject.page), totalPages);
-        
         const start = (stateObject.page - 1) * perPage;
         const end = start + perPage;
         const paginatedPosts = data.slice(start, end);
 
         const container = document.createElement('div');
-        container.className = 'listContainerVidioPlayerHHC'; // Pakai style List
-
-        const sekarang = new Date(); // Cek waktu sekarang
+        container.className = 'listContainerVidioPlayerHHC';
+        const sekarang = new Date();
         
         container.innerHTML = paginatedPosts.map(post => {
             const safeThumb = post.thumb.replace(/\/s\d+(-c)?\//, '/s300-c/');
@@ -499,14 +478,13 @@
             let onClickAction = `onclick="window.MORIKNUS_PLAYER.openLink('${post.url}')"`;
             let scheduledHTML = '';
             let scheduledClass = '';
-            let dateLabel = `Rilis: ${dateString}`; // Label default
+            let dateLabel = `Rilis: ${dateString}`;
 
-            // --- (PERBAIKAN) LOGIKA JADWAL (Label "Jadwal" ATAU Tanggal Rilis di Masa Depan) ---
             if (post.labels.includes('Jadwal') || post.date > sekarang) {
                 isScheduled = true;
-                onClickAction = ''; // Nonaktifkan klik
+                onClickAction = '';
                 scheduledClass = 'is-scheduled';
-                dateLabel = `Jadwal: ${dateString}`; // Ganti label tanggal
+                dateLabel = `Jadwal: ${dateString}`;
                 scheduledHTML = `
                 <div class="scheduledOverlayVidioPlayerHHC">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
@@ -535,10 +513,8 @@
         renderPagination(totalPages, stateObject.page, paginationEl, onPageChangeCallback);
     }
 
-    // --- (BARU) RENDER GRID VIEW (Untuk Rekomendasi) ---
     function renderGridLayout(data, contentEl, paginationEl, stateObject, type, onPageChangeCallback) {
         if (!contentEl || !paginationEl) return;
-        
         if (data.length === 0) {
             contentEl.innerHTML = `<div class="loadingVidioPlayerHHC">Tidak ada ${type} ditemukan.</div>`;
             paginationEl.innerHTML = '';
@@ -548,13 +524,12 @@
         const perPage = CONFIG.recommendationsPerPage || 6;
         const totalPages = Math.ceil(data.length / perPage);
         stateObject.page = Math.min(Math.max(1, stateObject.page), totalPages);
-        
         const start = (stateObject.page - 1) * perPage;
         const end = start + perPage;
         const paginatedPosts = data.slice(start, end);
 
         const container = document.createElement('div');
-        container.className = 'gridContainerVidioPlayerHHC'; // Pakai style Grid
+        container.className = 'gridContainerVidioPlayerHHC';
 
         container.innerHTML = paginatedPosts.map(post => {
             const safeThumb = post.thumb.replace(/\/s\d+(-c)?\//, '/s300-c/');
@@ -600,7 +575,6 @@
 
         containerEl.innerHTML = html;
         
-        // Pasang event listener
         containerEl.querySelector(`#${id(1)}`).addEventListener('click', () => onPageClickCallback(1));
         containerEl.querySelector(`#${id(currentPage - 1)}`).addEventListener('click', () => onPageClickCallback(currentPage - 1));
         containerEl.querySelector(`#${id(currentPage + 1)}`).addEventListener('click', () => onPageClickCallback(currentPage + 1));
@@ -649,3 +623,4 @@
 
 })(); // Menutup IIFE
 //]]>
+</script>
